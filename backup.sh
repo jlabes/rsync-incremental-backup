@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# --- CONFIGURAÇÕES E VARIÁVEIS GLOBAIS ---
-
+# Define as variáveis globais
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 CONFIG_DIR="$BASE_DIR/config"
@@ -19,8 +18,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# --- FUNÇÕES AUXILIARES ---
-
+# Configura o setup inicial
+# Cria pastas config/ e logs/
+# Garante que os arquivos dirs.txt, ignore.txt e destino.txt existam
 setup_ambiente() {
     mkdir -p "$CONFIG_DIR"
     mkdir -p "$LOG_DIR"
@@ -30,6 +30,10 @@ setup_ambiente() {
     [ ! -f "$DESTINO_CFG" ] && touch "$DESTINO_CFG"
 }
 
+# Registra mensagens no log e exibe no terminal
+# Parâmetros:
+#   $1 -> nível da mensagem (INFO, SUCCESS, WARN, ERROR)
+#   $2 -> texto da mensagem
 log_msg() {
     local nivel="$1"
     local mensagem="$2"
@@ -47,8 +51,11 @@ log_msg() {
     fi
 }
 
-# --- FUNÇÕES DE CONFIGURAÇÃO ---
-
+# Permite configurar o diretório onde os backups serão salvos
+# Mostra destino atual (se existir)
+# Solicita novo caminho
+# Valida e cria o diretório
+# Salva em destino.txt
 configurar_destino() {
     echo -e "\n--- Configurar Local de Destino do Backup ---"
    
@@ -74,6 +81,9 @@ configurar_destino() {
     fi
 }
 
+# Adiciona um novo diretório à lista de origens que terão backup.
+# Valida se a pasta existe
+# Adiciona ao arquivo dirs.txt
 adicionar_origem() {
     echo -e "\n--- Adicionar Pasta para Fazer Backup ---"
     echo "Digite o caminho da pasta que você quer salvar:"
@@ -92,8 +102,12 @@ adicionar_origem() {
     fi
 }
 
-# --- LÓGICA DO BACKUP (Execução) ---
-
+# Realiza o backup
+# Verifica se destino.txt está configurado
+# Lê diretórios listados em dirs.txt
+# Executa sincronização via rsync
+# Aplica regras de exclusão do arquivp ignore.txt
+# Registra logs
 executar_backup() {
     log_msg "INFO" ">>> Iniciando rotina de backup..."
 
@@ -141,8 +155,13 @@ executar_backup() {
     log_msg "INFO" ">>> Fim da rotina."
 }
 
-# --- MENU RECURSIVO ---
-
+# Exibe o menu principal
+# Configurar destino
+# Adicionar origens
+# Executar backup
+# Criar agendamento no cron
+# Visualizar logs
+# Sair do programa
 exibir_menu() {
     echo -e "\n=========================================="
     echo -e "      SISTEMA DE BACKUP     "
@@ -232,10 +251,11 @@ exibir_menu() {
     esac
 }
 
-# --- INÍCIO ---
-
+# Cria o setup inicial
 setup_ambiente
 
+# Se chamado com --cron, executa backup automaticamente
+# Caso contrário, abre o menu interativo
 if [ "${1:-}" == "--cron" ]; then
     executar_backup
 else
